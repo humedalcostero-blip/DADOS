@@ -1,22 +1,21 @@
-# Dados 3D corregidos
+# Dados 3D estable
 
-Esta versión corrige dos problemas:
+Versión completamente autónoma y sin bibliotecas externas.
 
-1. Cada tipo de dado usa una geometría distinta:
-   - D4: tetraedro
-   - D6: cubo
-   - D8: octaedro
-   - D10: bipirámide pentagonal de 10 caras
-   - D12: dodecaedro
-   - D20: icosaedro
-2. El número informado como resultado se orienta hacia arriba al terminar la animación.
+## Correcciones
 
-## Publicación en GitHub Pages
+- No depende de Three.js ni de una conexión externa.
+- Funciona directamente en GitHub Pages.
+- El número de la cara principal coincide siempre con el resultado.
+- Cada dado tiene una forma visual distinta.
+- Incluye D4, D6, D8, D10, D12 y D20.
+- Permite agregar, eliminar, bloquear y lanzar dados.
+- Incluye suma, mínimo, máximo, historial y tema oscuro.
 
-Sube `index.html`, `styles.css` y `script.js` a la raíz del repositorio. Luego activa:
+## Instalación
+
+Sube `index.html` a la raíz del repositorio.
+
+Luego activa:
 
 Settings → Pages → Deploy from a branch → main → /root
-
-## Importante
-
-La visualización 3D utiliza Three.js desde CDN, por lo que el dispositivo necesita conexión a Internet al abrir la página.

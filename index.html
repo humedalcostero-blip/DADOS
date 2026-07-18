@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#111827">
+<title>Dados 3D</title>
+<style>
+:root{
+  --bg:#eef2ff;--panel:#ffffffdd;--text:#111827;--muted:#6b7280;
+  --border:#c7d2fe;--primary:#4f46e5;--secondary:#e0e7ff;
+  --danger:#fee2e2;--shadow:0 18px 45px rgba(15,23,42,.12);
+  --die1:#818cf8;--die2:#4f46e5;--die3:#312e81
+}
+body.dark{
+  --bg:#070b16;--panel:#111827e8;--text:#f9fafb;--muted:#9ca3af;
+  --border:#374151;--primary:#818cf8;--secondary:#1f2937;
+  --danger:#3f1d24;--shadow:0 18px 45px rgba(0,0,0,.4);
+  --die1:#a5b4fc;--die2:#6366f1;--die3:#3730a3
+}
+*{box-sizing:border-box}
+body{
+  margin:0;min-height:100vh;color:var(--text);
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at top left,rgba(99,102,241,.22),transparent 35%),
+    radial-gradient(circle at bottom right,rgba(14,165,233,.15),transparent 40%),
+    var(--bg)
+}
+button,select{font:inherit}
+button{
+  border:0;border-radius:13px;padding:.78rem 1rem;font-weight:800;
+  cursor:pointer;transition:.15s
+}
+button:hover{transform:translateY(-1px);filter:brightness(1.04)}
+button:active{transform:translateY(1px)}
+button:disabled{opacity:.55;cursor:not-allowed;transform:none}
+select{
+  min-height:44px;border:1px solid var(--border);border-radius:12px;
+  padding:0 .85rem;background:var(--panel);color:var(--text);font-weight:800
+}
+.panel{
+  background:var(--panel);border:1px solid var(--border);
+  box-shadow:var(--shadow);backdrop-filter:blur(14px)
+}
+.topbar,.app{width:min(1180px,calc(100% - 2rem));margin:auto}
+.topbar{
+  padding:2rem 0 1rem;display:flex;justify-content:space-between;
+  align-items:flex-start;gap:1rem
+}
+.topbar h1{margin:0;font-size:clamp(2rem,7vw,4rem);letter-spacing:-.05em}
+.topbar p{margin:.7rem 0 0;color:var(--muted)}
+.icon-btn{
+  width:48px;height:48px;padding:0;background:var(--panel);
+  color:var(--text);border:1px solid var(--border);box-shadow:var(--shadow)
+}
+.controls{
+  border-radius:22px;padding:1rem;display:grid;
+  grid-template-columns:minmax(160px,1fr) repeat(3,auto);
+  gap:.75rem;align-items:end
+}
+.controls label{display:grid;gap:.4rem;color:var(--muted);font-size:.85rem;font-weight:800}
+.primary{background:var(--primary);color:white}
+.secondary{background:var(--secondary);color:var(--text)}
+.danger{background:var(--danger);color:#991b1b}
+body.dark .danger{color:#fecaca}
+.ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.summary{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:1rem;margin:1rem 0
+}
+.summary article{border-radius:18px;padding:1rem}
+.summary span{display:block;color:var(--muted);font-size:.82rem;font-weight:800}
+.summary strong{display:block;font-size:2rem;margin-top:.15rem}
+.dice-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:1rem
+}
+.die-card{border-radius:24px;padding:1rem;overflow:hidden}
+.die-card.locked{outline:2px solid #f59e0b}
+.die-head,.result,.history-head{
+  display:flex;justify-content:space-between;align-items:center;gap:.8rem
+}
+.die-head>div{display:grid}
+.die-name{font-size:1.35rem}
+.die-status{color:var(--muted);font-weight:700}
+.stage{
+  height:230px;display:grid;place-items:center;perspective:850px;
+  position:relative;overflow:hidden
+}
+.die-visual{
+  width:150px;height:150px;position:relative;
+  transform-style:preserve-3d;
+  transition:transform .45s cubic-bezier(.2,.75,.25,1.2)
+}
+.die-visual.rolling{animation:tumble .95s cubic-bezier(.18,.7,.22,1)}
+@keyframes tumble{
+  0%{transform:rotateX(0) rotateY(0) rotateZ(0) scale(1)}
+  25%{transform:rotateX(230deg) rotateY(180deg) rotateZ(95deg) scale(1.08)}
+  55%{transform:rotateX(500deg) rotateY(420deg) rotateZ(250deg) scale(.94)}
+  80%{transform:rotateX(720deg) rotateY(650deg) rotateZ(390deg) scale(1.04)}
+  100%{transform:rotateX(810deg) rotateY(750deg) rotateZ(450deg) scale(1)}
+}
+.shape{
+  position:absolute;inset:0;filter:drop-shadow(0 18px 16px rgba(15,23,42,.28));
+}
+.face-main,.face-side,.face-top{
+  position:absolute;display:grid;place-items:center;
+  color:white;font-weight:950;text-shadow:0 2px 4px rgba(0,0,0,.28);
+  border:2px solid rgba(255,255,255,.35);
+  backface-visibility:hidden;user-select:none
+}
+.face-main{background:linear-gradient(145deg,var(--die1),var(--die2))}
+.face-side{background:linear-gradient(145deg,var(--die2),var(--die3));opacity:.94}
+.face-top{background:linear-gradient(145deg,#c7d2fe,var(--die1));color:#111827}
+.main-number{font-size:2.4rem}
+.small-number{font-size:1.25rem}
+
+/* D6 */
+.shape-d6 .face-main{width:100px;height:100px;left:25px;top:35px;border-radius:16px;transform:translateZ(35px)}
+.shape-d6 .face-side{width:70px;height:100px;left:95px;top:35px;border-radius:10px;clip-path:polygon(0 0,100% 18%,100% 88%,0 100%);transform:translateZ(5px)}
+.shape-d6 .face-top{width:100px;height:55px;left:25px;top:3px;clip-path:polygon(0 60%,70% 0,100% 42%,30% 100%);transform:translateZ(18px)}
+
+/* D4 */
+.shape-d4 .face-main{
+  width:140px;height:135px;left:5px;top:8px;
+  clip-path:polygon(50% 0,100% 100%,0 100%)
+}
+.shape-d4 .face-side{
+  width:72px;height:118px;left:75px;top:25px;
+  clip-path:polygon(0 0,100% 85%,0 100%)
+}
+.shape-d4 .face-top{
+  width:78px;height:54px;left:36px;top:18px;
+  clip-path:polygon(50% 0,100% 100%,0 100%)
+}
+
+/* D8 */
+.shape-d8 .face-main{
+  width:140px;height:140px;left:5px;top:5px;
+  clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)
+}
+.shape-d8 .face-side{
+  width:70px;height:140px;left:75px;top:5px;
+  clip-path:polygon(0 0,100% 50%,0 100%,28% 50%)
+}
+.shape-d8 .face-top{
+  width:90px;height:75px;left:30px;top:3px;
+  clip-path:polygon(50% 0,100% 100%,0 100%)
+}
+
+/* D10 */
+.shape-d10 .face-main{
+  width:140px;height:145px;left:5px;top:2px;
+  clip-path:polygon(50% 0,88% 25%,100% 64%,50% 100%,0 64%,12% 25%)
+}
+.shape-d10 .face-side{
+  width:70px;height:132px;left:75px;top:9px;
+  clip-path:polygon(0 0,100% 20%,100% 68%,0 100%,25% 58%)
+}
+.shape-d10 .face-top{
+  width:90px;height:60px;left:30px;top:5px;
+  clip-path:polygon(50% 0,100% 60%,50% 100%,0 60%)
+}
+
+/* D12 */
+.shape-d12 .face-main{
+  width:140px;height:140px;left:5px;top:5px;
+  clip-path:polygon(50% 0,97% 35%,79% 91%,21% 91%,3% 35%)
+}
+.shape-d12 .face-side{
+  width:70px;height:125px;left:75px;top:15px;
+  clip-path:polygon(0 0,100% 28%,100% 75%,0 100%,25% 55%)
+}
+.shape-d12 .face-top{
+  width:88px;height:65px;left:31px;top:5px;
+  clip-path:polygon(50% 0,100% 38%,82% 100%,18% 100%,0 38%)
+}
+
+/* D20 */
+.shape-d20 .face-main{
+  width:140px;height:140px;left:5px;top:5px;
+  clip-path:polygon(50% 0,92% 24%,100% 68%,65% 100%,20% 92%,0 50%,18% 12%)
+}
+.shape-d20 .face-side{
+  width:72px;height:132px;left:74px;top:8px;
+  clip-path:polygon(0 0,100% 22%,100% 70%,0 100%,28% 55%)
+}
+.shape-d20 .face-top{
+  width:92px;height:65px;left:29px;top:4px;
+  clip-path:polygon(50% 0,100% 55%,62% 100%,0 72%)
+}
+
+.result{
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  padding:.8rem 0
+}
+.result span{color:var(--muted);font-weight:800}
+.result-number{font-size:2rem}
+.die-controls{
+  display:grid;grid-template-columns:.8fr .8fr 1.25fr;
+  gap:.55rem;margin-top:.9rem
+}
+.history{margin:1rem 0 3rem;border-radius:24px;padding:1rem}
+.history h2{margin:0}
+.history p{margin:.2rem 0 0;color:var(--muted)}
+.history ol{list-style:none;margin:1rem 0 0;padding:0;display:grid;gap:.65rem}
+.history li{
+  display:flex;justify-content:space-between;gap:1rem;padding:.8rem 1rem;
+  border-radius:13px;background:rgba(99,102,241,.08);
+  border:1px solid var(--border)
+}
+.history small{color:var(--muted);white-space:nowrap}
+.empty{text-align:center;padding:1rem 0}
+.hidden{display:none}
+.error-box{
+  display:none;margin:1rem 0;padding:1rem;border-radius:16px;
+  background:#fee2e2;color:#991b1b;border:1px solid #fecaca
+}
+.error-box.show{display:block}
+@media(max-width:760px){
+  .controls{grid-template-columns:1fr 1fr}
+  .controls label{grid-column:1/-1}
+  .summary{grid-template-columns:1fr 1fr}
+}
+@media(max-width:430px){
+  .controls{grid-template-columns:1fr}
+  .die-controls{grid-template-columns:1fr 1fr}
+  .lock{grid-column:1/-1}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <h1>🎲 Dados 3D</h1>
+    <p>Dados aleatorios D4, D6, D8, D10, D12 y D20.</p>
+  </div>
+  <button id="themeToggle" class="icon-btn" aria-label="Cambiar tema">🌙</button>
+</header>
+
+<main class="app">
+  <div id="errorBox" class="error-box"></div>
+
+  <section class="controls panel">
+    <label>
+      Dado para agregar
+      <select id="newDieType">
+        <option value="4">D4</option>
+        <option value="6" selected>D6</option>
+        <option value="8">D8</option>
+        <option value="10">D10</option>
+        <option value="12">D12</option>
+        <option value="20">D20</option>
+      </select>
+    </label>
+    <button id="addDie" class="secondary">➕ Agregar dado</button>
+    <button id="rollAll" class="primary">🎲 Lanzar todos</button>
+    <button id="resetAll" class="danger">↻ Reiniciar</button>
+  </section>
+
+  <section class="summary">
+    <article class="panel"><span>Total</span><strong id="total">1</strong></article>
+    <article class="panel"><span>Mayor</span><strong id="maximum">1</strong></article>
+    <article class="panel"><span>Menor</span><strong id="minimum">1</strong></article>
+    <article class="panel"><span>Dados</span><strong id="count">1</strong></article>
+  </section>
+
+  <section id="diceGrid" class="dice-grid"></section>
+
+  <section class="history panel">
+    <div class="history-head">
+      <div>
+        <h2>Historial</h2>
+        <p>Últimos 30 lanzamientos.</p>
+      </div>
+      <button id="clearHistory" class="ghost">Limpiar</button>
+    </div>
+    <ol id="historyList"></ol>
+    <p id="emptyHistory" class="empty">Todavía no hay lanzamientos.</p>
+  </section>
+</main>
+
+<template id="dieTemplate">
+  <article class="die-card panel">
+    <div class="die-head">
+      <div>
+        <strong class="die-name">D6</strong>
+        <small class="die-status">Activo</small>
+      </div>
+      <button class="remove ghost" aria-label="Eliminar dado">✕</button>
+    </div>
+
+    <div class="stage">
+      <div class="die-visual">
+        <div class="shape">
+          <div class="face-main"><span class="main-number">1</span></div>
+          <div class="face-side"><span class="side-number small-number">2</span></div>
+          <div class="face-top"><span class="top-number small-number">3</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="result">
+      <span>Resultado</span>
+      <strong class="result-number">1</strong>
+    </div>
+
+    <div class="die-controls">
+      <select class="type-select">
+        <option value="4">D4</option>
+        <option value="6">D6</option>
+        <option value="8">D8</option>
+        <option value="10">D10</option>
+        <option value="12">D12</option>
+        <option value="20">D20</option>
+      </select>
+      <button class="roll-one primary">Lanzar</button>
+      <button class="lock secondary">🔓 Bloquear</button>
+    </div>
+  </article>
+</template>
+
+<script>
+"use strict";
+
+const VALID_TYPES=[4,6,8,10,12,20];
+const STORAGE_KEY="dados3d-estable-v1";
+
+const grid=document.getElementById("diceGrid");
+const template=document.getElementById("dieTemplate");
+const totalEl=document.getElementById("total");
+const maxEl=document.getElementById("maximum");
+const minEl=document.getElementById("minimum");
+const countEl=document.getElementById("count");
+const historyList=document.getElementById("historyList");
+const emptyHistory=document.getElementById("emptyHistory");
+const errorBox=document.getElementById("errorBox");
+
+let dice=[];
+let history=[];
+let nextId=1;
+let rolling=false;
+
+function showError(message){
+  errorBox.textContent=message;
+  errorBox.classList.add("show");
+}
+
+window.addEventListener("error",event=>{
+  showError("Ocurrió un error: "+event.message);
+});
+
+function randomInt(min,max){
+  const range=max-min+1;
+  try{
+    if(window.crypto&&window.crypto.getRandomValues){
+      const values=new Uint32Array(1);
+      const limit=Math.floor(0x100000000/range)*range;
+      do{window.crypto.getRandomValues(values)}while(values[0]>=limit);
+      return min+(values[0]%range);
+    }
+  }catch(error){}
+  return Math.floor(Math.random()*range)+min;
+}
+
+function relatedNumber(value,sides,offset){
+  return ((value-1+offset)%sides)+1;
+}
+
+function addDie(sides=6,saved=null){
+  sides=VALID_TYPES.includes(Number(sides))?Number(sides):6;
+
+  const die={
+    id:saved&&Number.isFinite(Number(saved.id))?Number(saved.id):nextId++,
+    sides,
+    value:saved&&Number.isFinite(Number(saved.value))
+      ?Math.max(1,Math.min(Number(saved.value),sides)):1,
+    locked:Boolean(saved&&saved.locked)
+  };
+
+  nextId=Math.max(nextId,die.id+1);
+  dice.push(die);
+
+  const card=template.content.firstElementChild.cloneNode(true);
+  card.dataset.id=String(die.id);
+
+  const visual=card.querySelector(".die-visual");
+  const shape=card.querySelector(".shape");
+  const main=card.querySelector(".main-number");
+  const side=card.querySelector(".side-number");
+  const top=card.querySelector(".top-number");
+  const result=card.querySelector(".result-number");
+  const name=card.querySelector(".die-name");
+  const status=card.querySelector(".die-status");
+  const select=card.querySelector(".type-select");
+  const lockButton=card.querySelector(".lock");
+
+  function sync(){
+    shape.className="shape shape-d"+die.sides;
+    name.textContent="D"+die.sides;
+    status.textContent=die.locked?"Bloqueado":"Activo";
+    select.value=String(die.sides);
+    result.textContent=String(die.value);
+
+    // La cara principal siempre muestra exactamente el resultado.
+    main.textContent=String(die.value);
+    side.textContent=String(relatedNumber(die.value,die.sides,1));
+    top.textContent=String(relatedNumber(die.value,die.sides,2));
+
+    lockButton.textContent=die.locked?"🔒 Desbloquear":"🔓 Bloquear";
+    card.classList.toggle("locked",die.locked);
+  }
+
+  die.card=card;
+  die.visual=visual;
+  die.sync=sync;
+
+  select.addEventListener("change",()=>{
+    die.sides=Number(select.value);
+    die.value=Math.min(die.value,die.sides);
+    sync();
+    updateSummary();
+    saveState();
+  });
+
+  card.querySelector(".roll-one").addEventListener("click",()=>{
+    rollDice([die]);
+  });
+
+  lockButton.addEventListener("click",()=>{
+    die.locked=!die.locked;
+    sync();
+    saveState();
+  });
+
+  card.querySelector(".remove").addEventListener("click",()=>{
+    if(dice.length===1){
+      alert("Debe quedar al menos un dado.");
+      return;
+    }
+    dice=dice.filter(item=>item.id!==die.id);
+    card.remove();
+    updateSummary();
+    saveState();
+  });
+
+  grid.appendChild(card);
+  sync();
+  updateSummary();
+}
+
+async function rollDice(targetDice){
+  if(rolling)return;
+
+  const active=targetDice.filter(die=>!die.locked);
+  if(active.length===0)return;
+
+  rolling=true;
+  setControlsDisabled(true);
+
+  active.forEach(die=>{
+    die.visual.classList.remove("rolling");
+    void die.visual.offsetWidth;
+    die.visual.classList.add("rolling");
+  });
+
+  await new Promise(resolve=>setTimeout(resolve,950));
+
+  active.forEach(die=>{
+    die.value=randomInt(1,die.sides);
+    die.visual.classList.remove("rolling");
+
+    const x=randomInt(-12,12);
+    const y=randomInt(-18,18);
+    const z=randomInt(-6,6);
+    die.visual.style.transform=`rotateX(${x}deg) rotateY(${y}deg) rotateZ(${z}deg)`;
+
+    die.sync();
+  });
+
+  updateSummary();
+  addHistory();
+  saveState();
+
+  rolling=false;
+  setControlsDisabled(false);
+}
+
+function setControlsDisabled(disabled){
+  document.querySelectorAll("button,select").forEach(control=>{
+    control.disabled=disabled;
+  });
+}
+
+function updateSummary(){
+  const values=dice.map(die=>die.value);
+  const total=values.reduce((sum,value)=>sum+value,0);
+
+  totalEl.textContent=String(total);
+  maxEl.textContent=values.length?String(Math.max(...values)):"—";
+  minEl.textContent=values.length?String(Math.min(...values)):"—";
+  countEl.textContent=String(dice.length);
+}
+
+function addHistory(){
+  const entry={
+    time:new Date().toLocaleTimeString("es-CL",{
+      hour:"2-digit",minute:"2-digit",second:"2-digit"
+    }),
+    values:dice.map(die=>`D${die.sides}: ${die.value}${die.locked?" 🔒":""}`),
+    total:dice.reduce((sum,die)=>sum+die.value,0)
+  };
+
+  history.unshift(entry);
+  history=history.slice(0,30);
+  renderHistory();
+}
+
+function renderHistory(){
+  historyList.innerHTML="";
+  emptyHistory.classList.toggle("hidden",history.length>0);
+
+  history.forEach(entry=>{
+    const item=document.createElement("li");
+
+    const left=document.createElement("div");
+    const strong=document.createElement("strong");
+    const total=document.createElement("div");
+    const time=document.createElement("small");
+
+    strong.textContent=entry.values.join(" · ");
+    total.textContent="Total: "+entry.total;
+    time.textContent=entry.time;
+
+    left.append(strong,total);
+    item.append(left,time);
+    historyList.appendChild(item);
+  });
+}
+
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY,JSON.stringify({
+      dice:dice.map(({id,sides,value,locked})=>({id,sides,value,locked})),
+      history,
+      nextId,
+      dark:document.body.classList.contains("dark")
+    }));
+  }catch(error){}
+}
+
+function resetAll(){
+  dice=[];
+  history=[];
+  nextId=1;
+  grid.innerHTML="";
+  addDie(6);
+  renderHistory();
+  saveState();
+}
+
+document.getElementById("addDie").addEventListener("click",()=>{
+  addDie(Number(document.getElementById("newDieType").value));
+  saveState();
+});
+
+document.getElementById("rollAll").addEventListener("click",()=>{
+  rollDice(dice);
+});
+
+document.getElementById("resetAll").addEventListener("click",()=>{
+  if(confirm("¿Reiniciar todos los dados y borrar el historial?")){
+    resetAll();
+  }
+});
+
+document.getElementById("clearHistory").addEventListener("click",()=>{
+  history=[];
+  renderHistory();
+  saveState();
+});
+
+document.getElementById("themeToggle").addEventListener("click",()=>{
+  document.body.classList.toggle("dark");
+  document.getElementById("themeToggle").textContent=
+    document.body.classList.contains("dark")?"☀️":"🌙";
+  saveState();
+});
+
+(function load(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(STORAGE_KEY));
+
+    if(saved&&saved.dark){
+      document.body.classList.add("dark");
+      document.getElementById("themeToggle").textContent="☀️";
+    }
+
+    history=Array.isArray(saved&&saved.history)?saved.history.slice(0,30):[];
+
+    if(saved&&Array.isArray(saved.dice)&&saved.dice.length){
+      saved.dice.forEach(item=>addDie(item.sides,item));
+      nextId=Math.max(nextId,Number(saved.nextId)||1);
+    }else{
+      addDie(6);
+    }
+
+    renderHistory();
+  }catch(error){
+    dice=[];
+    history=[];
+    grid.innerHTML="";
+    addDie(6);
+    renderHistory();
+  }
+})();
+</script>
+</body>
+</html>
