@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111827" />
+  <title>Dados 3D</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>🎲 Dados 3D</h1>
+      <p>Lanza varios dados, cambia sus caras y bloquea los resultados que quieras conservar.</p>
+    </div>
+    <button id="themeToggle" class="icon-btn" aria-label="Cambiar tema" title="Cambiar tema">🌙</button>
+  </header>
+
+  <main class="app-shell">
+    <section class="controls card">
+      <div class="control-group">
+        <label for="diceType">Tipo de dado</label>
+        <select id="diceType">
+          <option value="4">D4</option>
+          <option value="6" selected>D6</option>
+          <option value="8">D8</option>
+          <option value="10">D10</option>
+          <option value="12">D12</option>
+          <option value="20">D20</option>
+        </select>
+      </div>
+
+      <button id="addDie" class="secondary">➕ Agregar dado</button>
+      <button id="rollAll" class="primary">🎲 Lanzar todos</button>
+      <button id="resetAll" class="danger">↻ Reiniciar</button>
+    </section>
+
+    <section class="summary-grid">
+      <article class="summary-card card">
+        <span>Total</span>
+        <strong id="totalValue">0</strong>
+      </article>
+      <article class="summary-card card">
+        <span>Mayor</span>
+        <strong id="maxValue">—</strong>
+      </article>
+      <article class="summary-card card">
+        <span>Menor</span>
+        <strong id="minValue">—</strong>
+      </article>
+      <article class="summary-card card">
+        <span>Dados</span>
+        <strong id="diceCount">1</strong>
+      </article>
+    </section>
+
+    <section>
+      <div id="diceContainer" class="dice-grid" aria-live="polite"></div>
+    </section>
+
+    <section class="history card">
+      <div class="history-header">
+        <div>
+          <h2>Historial</h2>
+          <p>Últimos lanzamientos realizados.</p>
+        </div>
+        <button id="clearHistory" class="ghost">Limpiar historial</button>
+      </div>
+      <ol id="historyList" class="history-list"></ol>
+      <p id="emptyHistory" class="empty-state">Todavía no hay lanzamientos.</p>
+    </section>
+  </main>
+
+  <template id="dieTemplate">
+    <article class="die-card card">
+      <div class="die-header">
+        <div>
+          <span class="die-label">D6</span>
+          <span class="lock-state">Activo</span>
+        </div>
+        <button class="remove-btn" title="Eliminar dado" aria-label="Eliminar dado">✕</button>
+      </div>
+
+      <div class="scene">
+        <div class="die-shape" role="img" aria-label="Resultado del dado">
+          <div class="face front">1</div>
+          <div class="face back">2</div>
+          <div class="face right">3</div>
+          <div class="face left">4</div>
+          <div class="face top">5</div>
+          <div class="face bottom">6</div>
+        </div>
+      </div>
+
+      <div class="result-row">
+        <span>Resultado</span>
+        <strong class="result-value">1</strong>
+      </div>
+
+      <div class="die-actions">
+        <select class="faces-select" aria-label="Cambiar cantidad de caras">
+          <option value="4">D4</option>
+          <option value="6">D6</option>
+          <option value="8">D8</option>
+          <option value="10">D10</option>
+          <option value="12">D12</option>
+          <option value="20">D20</option>
+        </select>
+        <button class="roll-one primary">Lanzar</button>
+        <button class="lock-btn secondary">🔓 Bloquear</button>
+      </div>
+    </article>
+  </template>
+
+  <script src="script.js"></script>
+</body>
+</html>
