@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111827">
+  <title>Dados 3D</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>🎲 Dados 3D</h1>
+      <p>Cada dado tiene su forma correspondiente y la cara superior coincide con el resultado.</p>
+    </div>
+    <button id="themeToggle" class="icon-btn" aria-label="Cambiar tema">🌙</button>
+  </header>
+
+  <main class="app">
+    <section class="controls panel">
+      <label>
+        Dado para agregar
+        <select id="newDieType">
+          <option value="4">D4</option>
+          <option value="6" selected>D6</option>
+          <option value="8">D8</option>
+          <option value="10">D10</option>
+          <option value="12">D12</option>
+          <option value="20">D20</option>
+        </select>
+      </label>
+      <button id="addDie" class="secondary">➕ Agregar dado</button>
+      <button id="rollAll" class="primary">🎲 Lanzar todos</button>
+      <button id="resetAll" class="danger">↻ Reiniciar</button>
+    </section>
+
+    <section class="summary">
+      <article class="panel"><span>Total</span><strong id="total">0</strong></article>
+      <article class="panel"><span>Mayor</span><strong id="maximum">—</strong></article>
+      <article class="panel"><span>Menor</span><strong id="minimum">—</strong></article>
+      <article class="panel"><span>Dados</span><strong id="count">1</strong></article>
+    </section>
+
+    <section id="diceGrid" class="dice-grid"></section>
+
+    <section class="history panel">
+      <div class="history-head">
+        <div>
+          <h2>Historial</h2>
+          <p>Se conservan los últimos 30 lanzamientos.</p>
+        </div>
+        <button id="clearHistory" class="ghost">Limpiar</button>
+      </div>
+      <ol id="historyList"></ol>
+      <p id="emptyHistory" class="empty">Todavía no hay lanzamientos.</p>
+    </section>
+  </main>
+
+  <template id="dieTemplate">
+    <article class="die-card panel">
+      <div class="die-head">
+        <div>
+          <strong class="die-name">D6</strong>
+          <small class="die-status">Activo</small>
+        </div>
+        <button class="remove ghost" aria-label="Eliminar dado">✕</button>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas class="die-canvas"></canvas>
+        <div class="rolling-label">Lanzando…</div>
+      </div>
+
+      <div class="result">
+        <span>Resultado</span>
+        <strong class="result-number">1</strong>
+      </div>
+
+      <div class="die-controls">
+        <select class="type-select" aria-label="Tipo de dado">
+          <option value="4">D4</option>
+          <option value="6">D6</option>
+          <option value="8">D8</option>
+          <option value="10">D10</option>
+          <option value="12">D12</option>
+          <option value="20">D20</option>
+        </select>
+        <button class="roll-one primary">Lanzar</button>
+        <button class="lock secondary">🔓 Bloquear</button>
+      </div>
+    </article>
+  </template>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
